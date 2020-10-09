@@ -1,5 +1,7 @@
-import requests
 import json
+import os
+
+import requests
 from bs4 import BeautifulSoup
 
 QIITA_URL = 'https://qiita.com/'
@@ -13,7 +15,7 @@ def scrape_trend():
 
 
 def post_slack_message(items):
-    webhook_url = ''
+    webhook_urls = [v for k, v in os.environ.items() if 'webhook_url' in k]
     attachments = [_create_attachment(item) for item in items[:5]]
     post_data = {
         'username': 'trend_notifier',
@@ -21,7 +23,8 @@ def post_slack_message(items):
         'attachments': attachments
     }
 
-    requests.post(webhook_url, json.dumps(post_data), headers={'Content-Type': 'application/json'})
+    for webhook_url in webhook_urls:
+        requests.post(webhook_url, json.dumps(post_data), headers={'Content-Type': 'application/json'})
 
 
 def _create_attachment(item):
