@@ -15,16 +15,13 @@ def scrape_trend():
 
 
 def post_trend_message(items):
-    webhook_urls = [v for k, v in os.environ.items() if 'webhook_url' in k]
     attachments = [_create_attachment(item) for item in items[:5]]
     post_data = {
         'username': 'trend_notifier',
         'text': 'Qiitaのトレンド記事をおしらせします',
         'attachments': attachments
     }
-
-    for webhook_url in webhook_urls:
-        requests.post(webhook_url, json.dumps(post_data), headers={'Content-Type': 'application/json'})
+    _post_message(post_data)
 
 
 def _create_attachment(tr_item):
@@ -47,7 +44,10 @@ def post_error_message(stack_trace):
         'text': 'トレンド記事の取得に失敗しました',
         'attachments': [{'text': stack_trace, 'color': 'danger'}]
     }
+    _post_message(post_data)
 
+
+def _post_message(post_data):
     webhook_urls = [v for k, v in os.environ.items() if 'webhook_url' in k]
     for webhook_url in webhook_urls:
         requests.post(webhook_url, json.dumps(post_data), headers={'Content-Type': 'application/json'})
