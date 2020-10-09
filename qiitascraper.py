@@ -11,8 +11,7 @@ QIITA_URL = 'https://qiita.com/'
 def scrape_trend():
     response = requests.get(QIITA_URL)
     bs = BeautifulSoup(response.text, 'html.parser')
-    trend_text = bs.find('div', attrs={'data-hyperapp-app': 'Trend'}).get('data-hyperapp-props')
-    return [item['node'] for item in json.loads(trend_text)['trend']['edges']]
+    return bs.select('.tr-Item')
 
 
 def post_trend_message(items):
@@ -28,13 +27,16 @@ def post_trend_message(items):
         requests.post(webhook_url, json.dumps(post_data), headers={'Content-Type': 'application/json'})
 
 
-def _create_attachment(item):
+def _create_attachment(tr_item):
+    article_info_tag = tr_item.find('a', attrs={'class': 'tr-Item_title'})
+    author_name = tr_item.find('a', attrs={'class': 'tr-Item_author'}).text
+
     attachment = {
-        'author_name': item['author']['urlName'],
-        'author_link': QIITA_URL + item['author']['urlName'],
-        'author_icon': item['author']['profileImageUrl'],
-        'title': item['title'],
-        'title_link': QIITA_URL + item['author']['urlName'] + '/items/' + item['uuid'],
+        'author_name': author_name,
+        'author_link': f'https://qiita.com/{author_name}',
+        'author_icon': tr_item.find('img').get('src'),
+        'title': article_info_tag.text,
+        'title_link': article_info_tag.get('href'),
     }
     return attachment
 
