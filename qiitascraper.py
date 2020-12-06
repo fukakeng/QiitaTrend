@@ -48,7 +48,6 @@ def post_error_message(stack_trace):
         'text': 'トレンド記事の取得に失敗しました',
         'attachments': [{'text': stack_trace, 'color': 'danger'}]
     }
-    print(post_data)
     _post_message(post_data)
 
 
