@@ -6,15 +6,19 @@ import requests
 from bs4 import BeautifulSoup
 
 QIITA_URL = 'https://qiita.com/'
+AUTHOR_NAME_INDEX = -1
 
 
 def scrape_trend():
     response = requests.get(QIITA_URL)
     bs = BeautifulSoup(response.text, 'html.parser')
-    return bs.select('.tr-Item')
+    return bs.find_all('article')
 
 
 def post_trend_message(items):
+    if not items:
+        raise ValueError('Item list is empty.')
+
     attachments = [_create_attachment(item) for item in items[:5]]
     post_data = {
         'username': 'trend_notifier',
@@ -25,15 +29,15 @@ def post_trend_message(items):
 
 
 def _create_attachment(tr_item):
-    article_info_tag = tr_item.find('a', attrs={'class': 'tr-Item_title'})
-    author_name = tr_item.find('a', attrs={'class': 'tr-Item_author'}).text
+    title_info_tag = tr_item.find('h2')
+    author_name = tr_item.select('a:nth-of-type(2)')[0].contents[AUTHOR_NAME_INDEX]
 
     attachment = {
         'author_name': author_name,
         'author_link': f'https://qiita.com/{author_name}',
         'author_icon': tr_item.find('img').get('src'),
-        'title': article_info_tag.text,
-        'title_link': article_info_tag.get('href'),
+        'title': title_info_tag.text,
+        'title_link': title_info_tag.find('a').get('href'),
     }
     return attachment
 
@@ -44,6 +48,7 @@ def post_error_message(stack_trace):
         'text': 'トレンド記事の取得に失敗しました',
         'attachments': [{'text': stack_trace, 'color': 'danger'}]
     }
+    print(post_data)
     _post_message(post_data)
 
 
@@ -57,5 +62,5 @@ if __name__ == '__main__':
     try:
         trend_items = scrape_trend()
         post_trend_message(trend_items)
-    except AttributeError:
+    except Exception:
         post_error_message(traceback.format_exc())
