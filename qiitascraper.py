@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 QIITA_URL = 'https://qiita.com/'
 AUTHOR_NAME_INDEX = -1
+AUTHOR_LINK_INDEX = 1
 
 
 def scrape_trend():
@@ -30,7 +31,7 @@ def post_trend_message(items):
 
 def _create_attachment(tr_item):
     title_info_tag = tr_item.find('h2')
-    author_name = tr_item.select('a:nth-of-type(2)')[0].contents[AUTHOR_NAME_INDEX]
+    author_name = tr_item.select('a')[AUTHOR_LINK_INDEX].contents[AUTHOR_NAME_INDEX]
 
     attachment = {
         'author_name': author_name,
