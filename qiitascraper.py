@@ -6,7 +6,6 @@ import requests
 from bs4 import BeautifulSoup
 
 QIITA_URL = 'https://qiita.com/'
-AUTHOR_NAME_INDEX = -1
 AUTHOR_LINK_INDEX = 1
 
 
@@ -31,11 +30,11 @@ def post_trend_message(items):
 
 def _create_attachment(tr_item):
     title_info_tag = tr_item.find('h2')
-    author_name = tr_item.select('a')[AUTHOR_LINK_INDEX].contents[AUTHOR_NAME_INDEX]
+    author_path = tr_item.select('a')[AUTHOR_LINK_INDEX].get('href')
 
     attachment = {
-        'author_name': author_name,
-        'author_link': f'https://qiita.com/{author_name}',
+        'author_name': os.path.basename(author_path),
+        'author_link': f'https://qiita.com{author_path}',
         'author_icon': tr_item.find('img').get('src'),
         'title': title_info_tag.text,
         'title_link': title_info_tag.find('a').get('href'),
@@ -54,6 +53,7 @@ def post_error_message(stack_trace):
 
 def _post_message(post_data):
     webhook_urls = [v for k, v in os.environ.items() if 'webhook_url' in k]
+
     for webhook_url in webhook_urls:
         requests.post(webhook_url, json.dumps(post_data), headers={'Content-Type': 'application/json'})
 
