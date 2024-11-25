@@ -2,17 +2,24 @@ import json
 import os
 import traceback
 
+import feedparser
 import requests
-from bs4 import BeautifulSoup
 
-QIITA_URL = 'https://qiita.com/'
-AUTHOR_LINK_INDEX = 1
+QIITA_URL = 'https://qiita.com'
 
 
-def scrape_trend():
-    response = requests.get(QIITA_URL)
-    bs = BeautifulSoup(response.text, 'html.parser')
-    return bs.find_all('article')
+def main():
+    try:
+        # trend_items = scrape_trend()
+        trend_items = fetch_trend()
+        post_trend_message(trend_items)
+    except Exception:
+        post_error_message(traceback.format_exc())
+
+
+def fetch_trend():
+    feed = feedparser.parse(f'{QIITA_URL}/popular-items/feed')
+    return feed.entries
 
 
 def post_trend_message(items):
@@ -29,15 +36,15 @@ def post_trend_message(items):
 
 
 def _create_attachment(tr_item):
-    title_info_tag = tr_item.find('h2')
-    author_path = tr_item.select('a')[AUTHOR_LINK_INDEX].get('href')
+    response = requests.get(f'{QIITA_URL}/api/v2/users/{tr_item["author"]}')
+    user_info = response.json()
 
     attachment = {
-        'author_name': os.path.basename(author_path),
-        'author_link': f'https://qiita.com{author_path}',
-        'author_icon': tr_item.find('img').get('src'),
-        'title': title_info_tag.text,
-        'title_link': title_info_tag.find('a').get('href'),
+        'author_name': tr_item['author'],
+        'author_link': f'{QIITA_URL}/{tr_item["author"]}',
+        'author_icon': user_info['profile_image_url'],
+        'title': tr_item['title'],
+        'title_link': tr_item['link'],
     }
     return attachment
 
@@ -59,8 +66,4 @@ def _post_message(post_data):
 
 
 if __name__ == '__main__':
-    try:
-        trend_items = scrape_trend()
-        post_trend_message(trend_items)
-    except Exception:
-        post_error_message(traceback.format_exc())
+    main()
