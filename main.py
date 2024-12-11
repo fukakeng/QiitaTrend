@@ -10,7 +10,6 @@ QIITA_URL = 'https://qiita.com'
 
 def main():
     try:
-        # trend_items = scrape_trend()
         trend_items = fetch_trend()
         post_trend_message(trend_items)
     except Exception:
