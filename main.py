@@ -8,7 +8,7 @@ import requests
 QIITA_URL = 'https://qiita.com'
 
 
-def main():
+def main(request=None):
     try:
         trend_items = fetch_trend()
         post_trend_message(trend_items)
